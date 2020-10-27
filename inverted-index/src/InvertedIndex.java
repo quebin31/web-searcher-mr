@@ -1,3 +1,4 @@
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.StringTokenizer;
 
@@ -15,18 +16,33 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class InvertedIndex {
+    public static String urlFromPath(String path) {
+        String[] parts = path.split("/");
+
+        boolean foundDomain = false;
+        StringBuilder urlBuilder = new StringBuilder();
+        for (String part : parts) {
+            foundDomain = foundDomain | part.contains(".");
+            if (!foundDomain)
+                continue;
+
+            urlBuilder.append(part);
+            urlBuilder.append("/");
+        }
+
+        return urlBuilder.substring(0, urlBuilder.length() - 1);
+    }
 
     public static class TokenizerMapper extends Mapper<Object, Text, Text, Text> {
-
         private Text word = new Text();
-        private Text docPath = new Text();
+        private Text url = new Text();
 
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
             Document doc = Jsoup.parse(value.toString());
             String text = doc.body().text();
 
             FileSplit split = (FileSplit) context.getInputSplit();
-            docPath.set(split.getPath().toString());
+            url.set(urlFromPath(split.getPath().toString()));
 
             StringTokenizer itr = new StringTokenizer(text);
             while (itr.hasMoreTokens()) {
@@ -38,7 +54,7 @@ public class InvertedIndex {
                 }
 
                 word.set(temp);
-                context.write(word, docPath);
+                context.write(word, url);
             }
         }
     }
@@ -51,7 +67,7 @@ public class InvertedIndex {
 
             for (Text path : values) {
                 stringBuilder.append(path.toString());
-                stringBuilder.append(';');
+                stringBuilder.append('|');
             }
 
             result.set(stringBuilder.substring(0, stringBuilder.length() - 1));
@@ -69,6 +85,7 @@ public class InvertedIndex {
         job.setOutputValueClass(Text.class);
         job.setInputFormatClass(WholeFileInputFormat.class);
         FileInputFormat.addInputPath(job, new Path(args[0]));
+        FileInputFormat.setInputDirRecursive(job, true);
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
         System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
