@@ -38,6 +38,8 @@ public class WholeFileRecordReader extends RecordReader<Object, Text> {
             in = fs.open(path);
             byte[] bytes = IOUtils.readFullyToByteArray(in);
             this.currValue.set(bytes);
+        } catch (Exception e) {
+            System.out.println("Error reading whole file: " + e.toString());
         } finally {
             if (in != null)
                 IOUtils.closeStream(in);
