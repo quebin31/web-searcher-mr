@@ -1,5 +1,5 @@
-import { ClusterControllerClient, JobControllerClient } from "@google-cloud/dataproc";
-import { Storage } from "@google-cloud/storage";
+import { ClusterControllerClient, JobControllerClient } from '@google-cloud/dataproc';
+import { Storage } from '@google-cloud/storage';
 
 interface Options {
     projectId: string,
@@ -13,7 +13,7 @@ function sleep(milliseconds: number) {
     return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
 
-async function waitForJob(options: Options, jobClient: any, jobResp: any) {
+async function waitForJob(options: Options, jobClient: any, jobResp: any): Promise<string> {
     const terminalStates = new Set(['DONE', 'ERROR', 'CANCELLED']);
     const start = (new Date()).getMilliseconds();
 
@@ -34,6 +34,21 @@ async function waitForJob(options: Options, jobClient: any, jobResp: any) {
         await sleep(1000);
         [jobResp] = await jobClient.getJob(jobReq);
     }
+
+    return jobResp.status.state;
+}
+
+async function deleteCluster(options: Options, clusterClient: any) {
+    const [deleteOperation] = await clusterClient.deleteCluster({
+        projectId: options.projectId,
+        region: options.region,
+        clusterName: options.clusterName,
+    });
+
+    console.log(`Deleting cluster`);
+    await deleteOperation.promise();
+
+    console.log(`Cluster deleted succesfully`);
 }
 
 async function main(options: Options) {
@@ -79,28 +94,64 @@ async function main(options: Options) {
                 clusterName: options.clusterName,
             },
             hadoopJob: {
-                mainClass: "InvertedIndex",
+                mainClass: 'InvertedIndex',
                 jarFileUris: [
-                    "gs://web-searcher-unsa-1/inv-index.jar"
+                    'gs://web-searcher-unsa-1/inv-index.jar'
                 ],
                 args: [
-                    "gs://web-searcher-unsa-1/web-offline",
-                    "gs://web-searcher-unsa-1/inv-index-output"
+                    'gs://web-searcher-unsa-1/web-offline',
+                    'gs://web-searcher-unsa-1/inv-index-output'
                 ]
             },
         },
     });
 
-    const [deleteOperation] = await clusterClient.deleteCluster({
+    console.log('Running InvertedIndex job ...');
+    const invIndexStatus = await waitForJob(options, jobClient, invIndexJobResp);
+    if (invIndexStatus !== 'DONE') {
+        console.log('InvertedIndex job didn\'t finish succesfully');
+        await deleteCluster(options, clusterClient);
+        return;
+    }
+
+    const [pageRankJobResp] = await jobClient.submitJob({
         projectId: options.projectId,
         region: options.region,
-        clusterName: options.clusterName,
+        job: {
+            placement: {
+                clusterName: options.clusterName,
+            },
+            hadoopJob: {
+                mainClass: 'PageRank',
+                jarFileUris: [
+                    'gs://web-searcher-unsa-1/page-rank.jar'
+                ],
+                args: [
+                    'gs://web-searcher-unsa-1/web-offline',
+                    'gs://web-searcher-unsa-1/page-rank-output',
+                    options.pageRankIterations.toString(),
+                ]
+            }
+        }
     });
 
-    console.log(`Deleting cluster`);
-    await deleteOperation.promise();
+    console.log('Running PageRank job ...');
+    const pageRankStatus = await waitForJob(options, jobClient, pageRankJobResp);
+    if (pageRankStatus !== 'DONE') {
+        console.log('PageRank job didn\'t finish succesfully');
+        await deleteCluster(options, clusterClient);
+        return;
+    }
 
-    console.log(`Cluster deleted succesfully`);
+    const storage = new Storage();
+    const invIndexOutput = await storage
+        .bucket('web-searcher-unsa-1')
+        .file('inv-index-output/part-r-00000')
+        .download();
+
+    console.log(invIndexOutput);
+
+    await deleteCluster(options, clusterClient);
 }
 
 const args = process.argv.slice(2);
@@ -115,6 +166,6 @@ if (args.length >= 4) {
         timeout: timeout * 60 * 1000,
     });
 } else {
-    console.log("Error: unexpected number of params");
-    console.log("Usage: ... <projectId> <region> <clusterName> <pagerank-iterations> <timeout?>");
+    console.log('Error: unexpected number of params');
+    console.log('Usage: ... <projectId> <region> <clusterName> <pagerank-iterations> <timeout?>');
 }
