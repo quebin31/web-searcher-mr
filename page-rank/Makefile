@@ -14,6 +14,12 @@ clean:
 	@rm -rf classes 
 	@rm -rf bin
 
-run: $(binjar)
+reset: 
+	@rm -rf temp 
 	@rm -rf output
-	hadoop jar $(binjar) ${CLASS} input output
+
+run: $(binjar)
+	@rm -rf temp 
+	@rm -rf output
+
+	hadoop jar $(binjar) PageRank input output $(NO_ITERS)
