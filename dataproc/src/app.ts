@@ -1,6 +1,12 @@
 import { ClusterControllerClient, JobControllerClient } from '@google-cloud/dataproc';
 import { Storage } from '@google-cloud/storage';
 
+const DEFAULT_BUCKET = 'web-searcher-unsa-1';
+const WEB_OFFLINE = 'web-offline';
+const INVINDEX_OUTPUT = 'inv-index-output';
+const PAGERANK_TEMP = 'page-rank-temp';
+const PAGERANK_OUTPUT = 'page-rank-output';
+
 interface Options {
     projectId: string,
     region: string,
@@ -64,19 +70,43 @@ async function main(options: Options) {
         projectId: options.projectId,
     });
 
+    const storage = new Storage();
+    const configClusterBucket = `${options.clusterName}-config`;
+    const buckets = await storage.getBuckets();
+    if (!buckets[0].some((bucket) => bucket.name === configClusterBucket)) {
+        console.log(`Creating bucket ${configClusterBucket} for this cluster`);
+        await storage.createBucket(configClusterBucket, {
+            location: options.region,
+            regional: true,
+            standard: true,
+        });
+    }
+
+
     const [createOperation] = await clusterClient.createCluster({
         projectId: options.projectId,
         region: options.region,
         cluster: {
             clusterName: options.clusterName,
             config: {
+                softwareConfig: {
+                    imageVersion: 'preview-debian10',
+                },
                 masterConfig: {
                     numInstances: 1,
-                    machineTypeUri: 'n1-standard-1'
+                    machineTypeUri: 'n1-standard-1',
+                    diskConfig: {
+                        bootDiskType: 'pd-standard',
+                        bootDiskSizeGb: 500,
+                    }
                 },
                 workerConfig: {
                     numInstances: 2,
                     machineTypeUri: 'n1-standard-1',
+                    diskConfig: {
+                        bootDiskType: 'pd-standard',
+                        bootDiskSizeGb: 500,
+                    }
                 },
             },
         },
@@ -85,6 +115,18 @@ async function main(options: Options) {
     console.log(`Creating cluster: ${options.clusterName} ... (this may take some time)`);
     const [createResponse] = await createOperation.promise();
     console.log(`Cluster created successfully: ${createResponse.clusterName}`);
+
+    if (await storage.bucket(DEFAULT_BUCKET).file(INVINDEX_OUTPUT).exists()) {
+        await storage.bucket(DEFAULT_BUCKET).deleteFiles({
+            directory: INVINDEX_OUTPUT,
+        });
+    }
+
+    if (await storage.bucket(DEFAULT_BUCKET).file(PAGERANK_OUTPUT).exists()) {
+        await storage.bucket(DEFAULT_BUCKET).deleteFiles({
+            directory: PAGERANK_OUTPUT
+        })
+    }
 
     const [invIndexJobResp] = await jobClient.submitJob({
         projectId: options.projectId,
@@ -96,11 +138,11 @@ async function main(options: Options) {
             hadoopJob: {
                 mainClass: 'InvertedIndex',
                 jarFileUris: [
-                    'gs://web-searcher-unsa-1/inv-index.jar'
+                    `gs://${DEFAULT_BUCKET}/inv-index.jar`
                 ],
                 args: [
-                    'gs://web-searcher-unsa-1/web-offline',
-                    'gs://web-searcher-unsa-1/inv-index-output'
+                    `gs://${DEFAULT_BUCKET}/${WEB_OFFLINE}`,
+                    `gs://${DEFAULT_BUCKET}/${INVINDEX_OUTPUT}`
                 ]
             },
         },
@@ -124,11 +166,12 @@ async function main(options: Options) {
             hadoopJob: {
                 mainClass: 'PageRank',
                 jarFileUris: [
-                    'gs://web-searcher-unsa-1/page-rank.jar'
+                    `gs://${DEFAULT_BUCKET}/page-rank.jar`
                 ],
                 args: [
-                    'gs://web-searcher-unsa-1/web-offline',
-                    'gs://web-searcher-unsa-1/page-rank-output',
+                    `gs://${DEFAULT_BUCKET}/${WEB_OFFLINE}}]`,
+                    `gs://${DEFAULT_BUCKET}/${PAGERANK_TEMP}`,
+                    `gs://${DEFAULT_BUCKET}/${PAGERANK_OUTPUT}`,
                     options.pageRankIterations.toString(),
                 ]
             }
@@ -143,10 +186,10 @@ async function main(options: Options) {
         return;
     }
 
-    const storage = new Storage();
+
     const invIndexOutput = await storage
-        .bucket('web-searcher-unsa-1')
-        .file('inv-index-output/part-r-00000')
+        .bucket(DEFAULT_BUCKET)
+        .file(`${INVINDEX_OUTPUT}/part-r-00000`)
         .download();
 
     console.log(invIndexOutput);
