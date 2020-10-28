@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "run-mapreduce",
+  "name": "dataproc",
   "version": "1.0.0",
   "main": "build/app.js",
   "type": "module",
