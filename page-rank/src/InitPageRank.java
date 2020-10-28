@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.util.HashSet;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -19,8 +20,8 @@ public class InitPageRank {
         return url.startsWith("http");
     }
 
-    public static String removeHttpPrefix(String url) {
-        return url.replaceAll("(http://|https://)", "");
+    public static String cleanUrl(String url) {
+        return url.replaceAll("(http://|https://|\\?.*)", "");
     }
 
     public static String urlFromPath(String path) {
@@ -41,7 +42,7 @@ public class InitPageRank {
     }
 
     public static class OutLinkMapper extends Mapper<Object, Text, Text, Text> {
-        private Text urlAndRank = new Text();
+        private Text selfUrlAndRank = new Text();
         private Text outLink = new Text();
 
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
@@ -52,17 +53,21 @@ public class InitPageRank {
             String pathString = split.getPath().toString();
             String selfUrl = urlFromPath(pathString);
 
-            urlAndRank.set(selfUrl.concat("|1.5"));
+            selfUrlAndRank.set(selfUrl.concat("|1.5"));
 
+            HashSet<String> seenUrls = new HashSet<String>();
             for (Element link : links) {
                 String url = link.attr("href");
                 if (!isAbsoluteUrl(url))
                     continue;
 
-                outLink.set(removeHttpPrefix(url));
-                context.write(urlAndRank, outLink);
+                url = cleanUrl(url);
+                if (!seenUrls.contains(url)) {
+                    seenUrls.add(url);
+                    outLink.set(url);
+                    context.write(selfUrlAndRank, outLink);
+                }
             }
-
         }
     }
 
@@ -85,6 +90,7 @@ public class InitPageRank {
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "init-page-rank");
+
         job.setJarByClass(InitPageRank.class);
         job.setMapperClass(OutLinkMapper.class);
         job.setReducerClass(OutLinksReducer.class);
