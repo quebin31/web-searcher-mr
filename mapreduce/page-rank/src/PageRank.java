@@ -36,7 +36,7 @@ public class PageRank {
         initJob.waitForCompletion(true);
 
         // Subsequent job to calculate page rank values iteratively
-        FileSystem fs = tempPath.getFilesystem(conf);
+        FileSystem fs = tempPath.getFileSystem(conf);
         for (int it = 0; it < noIterations; ++it) {
             Job calcJob = Job.getInstance(conf, "calc-page-rank");
             calcJob.setJarByClass(CalcPageRank.class);
