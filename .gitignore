@@ -5,3 +5,4 @@
 web-offline
 logs-cache
 **/temp
+**/node_modules
