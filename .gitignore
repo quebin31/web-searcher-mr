@@ -2,7 +2,6 @@
 **/input
 **/output
 **/bin
+**/temp
 web-offline
 logs-cache
-**/temp
-**/node_modules
