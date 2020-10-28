@@ -7,5 +7,5 @@ mkdir -p ${workdir}
 cd ${workdir}
 
 for jar in $jars; do
-    jar --extract --file "../${jar}"
+    jar xf "../${jar}"
 done 

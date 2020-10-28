@@ -5,7 +5,7 @@ binjar = bin/main.jar
 build: $(files) unjar
 	HADOOP_CLASSPATH=$(libs) hadoop com.sun.tools.javac.Main -d classes $(files)
 	mkdir bin
-	jar --create --file $(binjar) -C classes . 
+	jar cf $(binjar) -C classes . 
 
 unjar:
 	./unjar.sh $(libs)
