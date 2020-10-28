@@ -30,10 +30,11 @@ public class WholeFileRecordReader extends RecordReader<Object, Text> {
             return false;
         }
 
-        FileSystem fs = FileSystem.get(conf);
+        Path path = this.split.getPath(); 
+        FileSystem fs = path.getFileSystem(conf);
         FSDataInputStream in = null;
         try {
-            in = fs.open(this.split.getPath());
+            in = fs.open(path);
             byte[] bytes = IOUtils.readFullyToByteArray(in);
             this.currValue.set(bytes);
         } finally {

@@ -3,6 +3,7 @@ import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -30,10 +31,11 @@ public class WholeFileRecordReader extends RecordReader<Object, Text> {
             return false;
         }
 
-        FileSystem fs = FileSystem.get(conf);
+        Path path = this.split.getPath(); 
+        FileSystem fs = path.getFileSystem(conf);
         FSDataInputStream in = null;
         try {
-            in = fs.open(this.split.getPath());
+            in = fs.open(path);
             byte[] bytes = IOUtils.readFullyToByteArray(in);
             this.currValue.set(bytes);
         } finally {
