@@ -8,19 +8,19 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class PageRank {
     public static void main(String[] args) throws Exception {
-        if (args.length != 3) {
+        if (args.length != 4) {
             System.out.println("Error: invalid number of arguments");
-            System.out.println("Usage: ... <input-dir> <output-dir> <no-iterations>");
+            System.out.println("Usage: ... <input-dir> <temp-dir> <output-dir> <no-iterations>");
             return;
         }
 
         Configuration conf = new Configuration();
 
         Path inputPath = new Path(args[0]);
-        Path tempPath = new Path("temp");
-        Path outputPath = new Path(args[1]);
+        Path tempPath = new Path(args[1]);
+        Path outputPath = new Path(args[2]);
 
-        int noIterations = Integer.parseUnsignedInt(args[2]);
+        int noIterations = Integer.parseUnsignedInt(args[3]);
 
         // Initial job to get outlinks (init page rank)
         Job initJob = Job.getInstance(conf, "init-page-rank");
@@ -36,7 +36,7 @@ public class PageRank {
         initJob.waitForCompletion(true);
 
         // Subsequent job to calculate page rank values iteratively
-        FileSystem fs = FileSystem.get(conf);
+        FileSystem fs = tempPath.getFilesystem(conf);
         for (int it = 0; it < noIterations; ++it) {
             Job calcJob = Job.getInstance(conf, "calc-page-rank");
             calcJob.setJarByClass(CalcPageRank.class);
