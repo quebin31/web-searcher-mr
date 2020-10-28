@@ -2,8 +2,14 @@ files = src/*.java
 libs = lib/*.jar
 binjar = bin/main.jar
 
+ifeq ($(JAVA8), 1)
+	hadoop_classpath = "${JAVA_HOME}/lib/tools.jar:$(libs)"
+else 
+	hadoop_classpath = "$(libs)"
+endif
+
 build: $(files) unjar
-	HADOOP_CLASSPATH=$(libs) hadoop com.sun.tools.javac.Main -d classes $(files)
+	HADOOP_CLASSPATH=$(hadoop_classpath) hadoop com.sun.tools.javac.Main -d classes $(files)
 	mkdir bin
 	jar cf $(binjar) -C classes . 
 
