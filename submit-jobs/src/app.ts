@@ -82,8 +82,10 @@ async function main(args: Arguments) {
     }
 
     const files = await storage.bucket(DEFAULT_BUCKET).getFiles();
+    const pageRankFiltered = args.filter.some((f) => f === 'page-rank');
+    const invIndexFiltered = args.filter.some((f) => f === 'inv-index');
 
-    if (files[0].some((f) => f.name == INVINDEX_OUTPUT)) {
+    if (!invIndexFiltered && files[0].some((f) => f.name == INVINDEX_OUTPUT)) {
         console.log('InvertedIndex output exists');
         if (args.force) {
             console.log('Deleting InvertedIndex output');
@@ -96,7 +98,7 @@ async function main(args: Arguments) {
         }
     }
 
-    if (files[0].some((f) => f.name == PAGERANK_TEMP)) {
+    if (!pageRankFiltered && files[0].some((f) => f.name == PAGERANK_TEMP)) {
         console.log('PageRank temp output exists');
         if (args.force) {
             console.log('Deleting PageRank temp output');
@@ -109,7 +111,7 @@ async function main(args: Arguments) {
         }
     }
 
-    if (files[0].some((f) => f.name == PAGERANK_OUTPUT)) {
+    if (!pageRankFiltered && files[0].some((f) => f.name == PAGERANK_OUTPUT)) {
         console.log('PageRank output exists');
         if (args.force) {
             console.log('Deleting PageRank output');
@@ -122,7 +124,7 @@ async function main(args: Arguments) {
         }
     }
 
-    if (!args.filter.some((f) => f === 'inv-index')) {
+    if (!invIndexFiltered) {
         console.log('Submitting InvertedIndex job ...');
         const [invIndexJobResp] = await jobClient.submitJob({
             projectId: args.projectId,
@@ -148,7 +150,7 @@ async function main(args: Arguments) {
         console.log('InvertedIndex job was filtered');
     }
 
-    if (!args.filter.some((f) => f === 'page-rank')) {
+    if (!pageRankFiltered) {
         console.log('Submitting PageRank job ...');
         const [pageRankJobResp] = await jobClient.submitJob({
             projectId: args.projectId,
