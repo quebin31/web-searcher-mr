@@ -28,4 +28,4 @@ run: $(binjar)
 	@rm -rf temp 
 	@rm -rf output
 
-	hadoop jar $(binjar) PageRank input output $(NO_ITERS)
+	hadoop jar $(binjar) PageRank input temp output $(NO_ITERS)

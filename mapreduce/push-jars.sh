@@ -2,6 +2,7 @@
 
 DEFAULT_BUCKET="web-searcher-cloud1"
 
+
 pushd inv-index
 make clean 
 JAVA8=1 make build 

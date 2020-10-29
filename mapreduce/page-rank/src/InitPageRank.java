@@ -53,7 +53,7 @@ public class InitPageRank {
             String pathString = split.getPath().toString();
             String selfUrl = urlFromPath(pathString);
 
-            selfUrlAndRank.set(selfUrl.concat("|1.5"));
+            selfUrlAndRank.set(selfUrl.concat("|1"));
 
             HashSet<String> seenUrls = new HashSet<String>();
             for (Element link : links) {
