@@ -151,7 +151,7 @@ async function main(options: Options) {
 }
 
 const args = process.argv.slice(2);
-if (args.length >= 5) {
+if (args.length >= 4) {
     await main({
         projectId: args[0],
         region: args[1],
