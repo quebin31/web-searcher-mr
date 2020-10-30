@@ -7,6 +7,8 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class PageRank {
+    private static final long MAX_SPLIT_SIZE = 128 * 1024 * 1024;
+
     public static void main(String[] args) throws Exception {
         if (args.length != 4) {
             System.out.println("Error: invalid number of arguments");
@@ -15,6 +17,7 @@ public class PageRank {
         }
 
         Configuration conf = new Configuration();
+        conf.setLong(FileInputFormat.SPLIT_MAXSIZE, MAX_SPLIT_SIZE);
 
         Path inputPath = new Path(args[0]);
         Path tempPath = new Path(args[1]);
