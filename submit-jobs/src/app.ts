@@ -85,7 +85,7 @@ async function main(args: Arguments) {
     const pageRankFiltered = args.filter.some((f) => f === 'page-rank');
     const invIndexFiltered = args.filter.some((f) => f === 'inv-index');
 
-    if (!invIndexFiltered && files[0].some((f) => f.name == INVINDEX_OUTPUT)) {
+    if (!invIndexFiltered && files[0].some((f) => f.name === INVINDEX_OUTPUT)) {
         console.log('InvertedIndex output exists');
         if (args.force) {
             console.log('Deleting InvertedIndex output');
@@ -98,7 +98,7 @@ async function main(args: Arguments) {
         }
     }
 
-    if (!pageRankFiltered && files[0].some((f) => f.name == PAGERANK_TEMP)) {
+    if (!pageRankFiltered && files[0].some((f) => f.name === PAGERANK_TEMP)) {
         console.log('PageRank temp output exists');
         if (args.force) {
             console.log('Deleting PageRank temp output');
@@ -111,7 +111,7 @@ async function main(args: Arguments) {
         }
     }
 
-    if (!pageRankFiltered && files[0].some((f) => f.name == PAGERANK_OUTPUT)) {
+    if (!pageRankFiltered && files[0].some((f) => f.name === PAGERANK_OUTPUT)) {
         console.log('PageRank output exists');
         if (args.force) {
             console.log('Deleting PageRank output');
