@@ -50,23 +50,24 @@ public class CalcPageRank {
         private Text outLinks = new Text();
 
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-            double pageRank = 0;
+            double accPageRank = 0;
 
             for (Text value : values) {
                 String temp = value.toString();
 
-                if (temp.contains("|") || temp.isEmpty()) {
+                try {
+                    double pageRank = Double.parseDouble(temp);
+                    accPageRank += pageRank;
+                } catch (Exception e) {
+                    // Not a page rank value, must be an outlink list
                     outLinks.set(temp);
-                } else {
-                    double rank = Double.parseDouble(temp);
-                    pageRank += rank;
                 }
             }
 
-            pageRank = 1 - DAMPING_FACTOR + (DAMPING_FACTOR * pageRank);
+            accPageRank = 1 - DAMPING_FACTOR + (DAMPING_FACTOR * accPageRank);
 
             String url = key.toString();
-            String urlRank = url.concat("|").concat(String.valueOf(pageRank));
+            String urlRank = url.concat("|").concat(String.valueOf(accPageRank));
             context.write(new Text(urlRank), outLinks);
         }
 
