@@ -53,8 +53,8 @@ public class InvertedIndex {
                     continue;
                 }
 
-                for (String word: temp.split("\\/")) {
-                    word.set(temp);
+                for (String splitted: temp.split("\\/")) {
+                    word.set(splitted);
                     context.write(word, url);
                 }
             }
