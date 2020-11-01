@@ -1,6 +1,9 @@
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.StringTokenizer;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+import java.util.HashSet;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -16,6 +19,8 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class InvertedIndex {
+    private final static Pattern validWordPattern = Pattern.compile("[a-zA-Z0-9]+");
+
     public static String urlFromPath(String path) {
         String[] parts = path.split("/");
 
@@ -34,8 +39,8 @@ public class InvertedIndex {
     }
 
     public static class TokenizerMapper extends Mapper<Object, Text, Text, Text> {
-        private Text word = new Text();
         private Text url = new Text();
+        private Text word = new Text();
 
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
             Document doc = Jsoup.parse(value.toString());
@@ -47,14 +52,11 @@ public class InvertedIndex {
             StringTokenizer itr = new StringTokenizer(text);
             while (itr.hasMoreTokens()) {
                 String temp = itr.nextToken();
-                temp = temp.replaceAll("(\"|\'|\\[|\\]|\\(|\\)|\\$|#|\\?|!|\\*|\\.|,|-|¿|¡|%)", "");
+                temp = temp.replaceAll("(\"|\'|\\[|\\]|\\(|\\)|\\$|#|\\?|!|\\*|\\.|,|-|¿|¡|%|\\+)", "");
 
-                if (temp.isEmpty()) {
-                    continue;
-                }
-
-                for (String splitted: temp.split("\\/")) {
-                    word.set(splitted);
+                Matcher matcher = validWordPattern.matcher(temp);
+                if (matcher.matches()) {
+                    word.set(temp);
                     context.write(word, url);
                 }
             }
@@ -65,11 +67,16 @@ public class InvertedIndex {
         private Text result = new Text();
 
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+            HashSet<String> seenUrls = new HashSet<String>();
             StringBuilder stringBuilder = new StringBuilder();
 
             for (Text path : values) {
-                stringBuilder.append(path.toString());
-                stringBuilder.append('|');
+                String temp = path.toString();
+                if (!seenUrls.contains(temp)) {
+                    seenUrls.add(temp);
+                    stringBuilder.append(temp);
+                    stringBuilder.append('|');
+                }
             }
 
             result.set(stringBuilder.substring(0, stringBuilder.length() - 1));
