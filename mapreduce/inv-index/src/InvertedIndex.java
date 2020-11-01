@@ -52,11 +52,11 @@ public class InvertedIndex {
             StringTokenizer itr = new StringTokenizer(text);
             while (itr.hasMoreTokens()) {
                 String temp = itr.nextToken();
-                temp = temp.replaceAll("(\"|\'|\\[|\\]|\\(|\\)|\\$|#|\\?|!|\\*|\\.|,|-|¿|¡|%|\\+)", "");
+                temp = temp.replaceAll("(\"|\'|\\[|\\]|\\(|\\)|\\$|#|\\?|!|\\*|\\.|,|¿|¡|%|\\+)", "");
 
                 Matcher matcher = validWordPattern.matcher(temp);
                 if (matcher.matches()) {
-                    word.set(temp);
+                    word.set(temp.toLowerCase());
                     context.write(word, url);
                 }
             }
