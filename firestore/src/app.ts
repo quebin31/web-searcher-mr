@@ -1,14 +1,13 @@
 import { Firestore, FieldValue, CollectionReference } from '@google-cloud/firestore';
 import { Storage, File } from '@google-cloud/storage';
 import { customAlphabet } from 'nanoid';
-import { pipeline } from 'stream';
 
 import estream from 'event-stream';
 import yargs from 'yargs';
 
 const DEFAULT_BUCKET = 'web-searcher-cloud1';
-const INVINDEX_OUTPUT = 'inv-index-output-test';
-const PAGERANK_OUTPUT = 'page-rank-output-test';
+const INVINDEX_OUTPUT = 'inv-index-out-test';
+const PAGERANK_OUTPUT = 'page-rank-out-test';
 const OUT_PART_REGEX = /part-r-[0-9]*$/;
 const VALID_WORD_REGEX = /[a-zA-Z0-9]+/;
 
@@ -67,7 +66,7 @@ function invIndexStep(files: Files, websites: Map, firestore: Firestore, storage
     console.log(`inv-index: processing file: ${file.name}`);
 
     const websitesCollection = firestore.collection('websites');
-    const invIndexCollection = firestore.collection('invIndex');
+    const invIndexCollection = firestore.collection('inv-index');
 
     const stream = storage.bucket(DEFAULT_BUCKET).file(file.name).createReadStream();
 
@@ -120,7 +119,7 @@ function pageRankStep(files: Files, websites: Map, firestore: Firestore, storage
     console.log(`page-rank: processing file: ${file.name}`);
 
     const websitesCollection = firestore.collection('websites');
-    const pageRankCollection = firestore.collection('pageRank');
+    const pageRankCollection = firestore.collection('page-rank');
 
     const stream = storage.bucket(DEFAULT_BUCKET).file(file.name).createReadStream();
 
@@ -165,7 +164,6 @@ async function main(args: Arguments) {
     };
 
     invIndexStep(files, websites, firestore, storage);
-    pageRankStep(files, websites, firestore, storage);
 }
 
 await main(
