@@ -95,7 +95,7 @@ function invIndexStep(files: Files, websites: Map, firestore: Firestore, storage
                 batch.set(wordDoc, { 'websites': FieldValue.arrayUnion(websiteId) }, { merge: true });
                 writes += 1;
 
-                if (writes === 500) {
+                if (writes === 499) {
                     await batch.commit();
                     writes = 0;
                     batch = firestore.batch();
