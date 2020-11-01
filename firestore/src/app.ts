@@ -9,7 +9,7 @@ const DEFAULT_BUCKET = 'web-searcher-cloud1';
 const INVINDEX_OUTPUT = 'inv-index-out-test';
 const PAGERANK_OUTPUT = 'page-rank-out-test';
 const OUT_PART_REGEX = /part-r-[0-9]*$/;
-const VALID_WORD_REGEX = /[a-zA-Z0-9]+/;
+const VALID_WORD_REGEX = /[a-zA-Z0-9-]+/;
 
 interface Map {
     [x: string]: string,
