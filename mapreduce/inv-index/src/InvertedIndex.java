@@ -19,7 +19,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class InvertedIndex {
-    private final static Pattern validWordPattern = Pattern.compile("[a-zA-Z0-9]+");
+    private final static Pattern validWordPattern = Pattern.compile("[a-zA-Z0-9-]+");
 
     public static String urlFromPath(String path) {
         String[] parts = path.split("/");
