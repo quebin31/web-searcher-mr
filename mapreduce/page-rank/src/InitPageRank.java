@@ -53,6 +53,7 @@ public class InitPageRank {
             String pathString = split.getPath().toString();
             String selfUrl = urlFromPath(pathString);
 
+            // Initial value of 1 for page rank
             selfUrlAndRank.set(selfUrl.concat("|1"));
 
             HashSet<String> seenUrls = new HashSet<String>();
