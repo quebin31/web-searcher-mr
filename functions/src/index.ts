@@ -17,7 +17,7 @@ interface SortData {
 exports.query = async (req: Request, res: Response) => {
     // Query parameters
     const word = req.query.word;
-    const limit = +(req.query.limit || '10');
+    const limit = Number(req.query.limit);
 
     if (word === undefined) {
         res.status(200).json({ results: [] });
@@ -55,9 +55,10 @@ exports.query = async (req: Request, res: Response) => {
         }
     });
 
+    const endIdx = isNaN(limit) ? 10 : (limit === -1) ? undefined : limit;
     const sortedWebDocs = allSortData
         .sort((a, b) => b.value - a.value)
-        .slice(0, limit)
+        .slice(0, endIdx)
         .map((sortData) => firestore.collection('websites').doc(sortData.webId));
 
     const sortedWebSnapshots = await firestore.getAll(...sortedWebDocs);
