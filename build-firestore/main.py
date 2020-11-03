@@ -2,6 +2,7 @@ import argparse
 import re
 
 from os import path, makedirs
+from shutil import rmtree
 from typing import Mapping
 from nanoid import generate
 from google.cloud.storage import Client as Storage
@@ -164,9 +165,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Build Firestore database')
     parser.add_argument('--project-id', type=str,
                         required=True, help='Project id')
+    parser.add_argument('-c', '--clear',
+                        action='store_true', help='Clear downloads after')
 
     args = parser.parse_args()
-    print(f'Project: {args.project_id}')
+    print(f'Args: {args}')
 
     db = Firestore(project=args.project_id)
     storage = Storage(project=args.project_id)
@@ -175,3 +178,9 @@ if __name__ == '__main__':
     push_inv_index(websites, db, storage)
     push_page_rank(websites, db, storage)
     websites.finish()
+
+    if args.clear:
+        spinner = Halo(text='clear: removing downloads directory')
+        spinner.start()
+        rmtree(DOWNLOADS, ignore_errors=True)
+        spinner.info(f'clear: (probably) removed downloads')

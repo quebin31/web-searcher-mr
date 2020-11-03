@@ -5,17 +5,17 @@ verify_ssl = true
 
 [dev-packages]
 autopep8 = "*"
-rope = "*"
 mypy = "*"
+rope = "*"
 
 [packages]
 google-cloud-firestore = "*"
 google-cloud-storage = "*"
-nanoid = "*"
 halo = "*"
+nanoid = "*"
 
 [requires]
 python_version = "3.8"
 
 [scripts]
-start = "python main.py --project-id web-searcher-293217"
+start = "python main.py --project-id web-searcher-293217 --clear"
