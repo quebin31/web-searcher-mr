@@ -6,11 +6,13 @@ verify_ssl = true
 [dev-packages]
 autopep8 = "*"
 rope = "*"
+mypy = "*"
 
 [packages]
 google-cloud-firestore = "*"
 google-cloud-storage = "*"
 nanoid = "*"
+halo = "*"
 
 [requires]
 python_version = "3.8"
