@@ -19,7 +19,8 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class InvertedIndex {
-    private final static Pattern validWordPattern = Pattern.compile("[a-zA-Z0-9-]+");
+    private final static Pattern validWordPattern = Pattern.compile("[a-zA-Z0-9]+");
+    private final static Pattern tokenSeparator = Pattern.compile("( |,|\\.|-|_|;)");
 
     public static String urlFromPath(String path) {
         String[] parts = path.split("/");
@@ -49,14 +50,15 @@ public class InvertedIndex {
             FileSplit split = (FileSplit) context.getInputSplit();
             url.set(urlFromPath(split.getPath().toString()));
 
-            StringTokenizer itr = new StringTokenizer(text);
-            while (itr.hasMoreTokens()) {
-                String temp = itr.nextToken();
-                temp = temp.replaceAll("(\"|\'|\\[|\\]|\\(|\\)|\\$|#|\\?|!|\\*|\\.|,|¿|¡|%|\\+)", "");
+            String[] tokens = tokenSeparator.split(text);
+            for (String token : tokens) {
+                token = token
+                    .replaceAll("(\"|\'|\\[|\\]|\\(|\\)|\\$|#|\\?|!|\\*|¿|¡|%|\\+)", "")
+                    .trim();
 
-                Matcher matcher = validWordPattern.matcher(temp);
+                Matcher matcher = validWordPattern.matcher(token);
                 if (matcher.matches()) {
-                    word.set(temp.toLowerCase());
+                    word.set(token.toLowerCase());
                     context.write(word, url);
                 }
             }
