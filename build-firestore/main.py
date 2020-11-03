@@ -13,8 +13,8 @@ from google.cloud.firestore import DocumentReference
 from halo import Halo
 
 DEFAULT_BUCKET = 'web-searcher-cloud1'
-INVINDEX_OUTPUT = 'inv-index-output'
-PAGERANK_OUTPUT = 'page-rank-output'
+INVINDEX_OUTPUT = 'inv-index-out-test'
+PAGERANK_OUTPUT = 'page-rank-out-test'
 VALID_PART = re.compile('.*/part-r-[0-9]*$')
 VALID_WORD = re.compile('^[a-zA-Z0-9][a-zA-Z0-9-]*$')
 DOWNLOADS = 'downloads'
@@ -112,17 +112,23 @@ def push_inv_index(websites: Websites, db: Firestore, storage: Storage):
             for line in file:
                 line = line.replace('\n', '')
                 key_value = line.split('\t')
-                word, urls = key_value[0], key_value[1]
+                word = key_value[0]
 
                 if not VALID_WORD.match(word):
                     continue
 
-                urls = urls.split('|')
-                websites_ids = [get_website_id(
-                    url, websites, create=True) for url in urls]
+                urls_and_counts = key_value[1].split('|')
+                word_website_sub = inv_index_collection.document(
+                    word).collection('websites')
 
-                word_doc = inv_index_collection.document(word)
-                batch.create(word_doc, {'websites': ArrayUnion(websites_ids)})
+                for i in range(0, len(urls_and_counts), 2):
+                    chunk = urls_and_counts[i:i + 2]
+
+                    url, count = chunk[0], chunk[1]
+                    webid = get_website_id(url, websites, create=True)
+
+                    word_website_doc = word_website_sub.document(webid)
+                    batch.create(word_website_doc, {'count': count})
 
             batch.finish()
 
