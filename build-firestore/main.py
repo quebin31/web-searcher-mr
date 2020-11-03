@@ -13,8 +13,8 @@ from google.cloud.firestore import DocumentReference
 from halo import Halo
 
 DEFAULT_BUCKET = 'web-searcher-cloud1'
-INVINDEX_OUTPUT = 'inv-index-out-test'
-PAGERANK_OUTPUT = 'page-rank-out-test'
+INVINDEX_OUTPUT = 'inv-index-output'
+PAGERANK_OUTPUT = 'page-rank-output'
 VALID_PART = re.compile('.*/part-r-[0-9]*$')
 VALID_WORD = re.compile('^[a-zA-Z0-9][a-zA-Z0-9-]*$')
 DOWNLOADS = 'downloads'
