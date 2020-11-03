@@ -3,7 +3,7 @@ import java.io.IOException;
 import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import java.util.HashSet;
+import java.util.HashMap;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -69,16 +69,19 @@ public class InvertedIndex {
         private Text result = new Text();
 
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-            HashSet<String> seenUrls = new HashSet<String>();
-            StringBuilder stringBuilder = new StringBuilder();
+            HashMap<String, Integer> urlCount = new HashMap<String, Integer>();
 
             for (Text path : values) {
                 String temp = path.toString();
-                if (!seenUrls.contains(temp)) {
-                    seenUrls.add(temp);
-                    stringBuilder.append(temp);
-                    stringBuilder.append('|');
-                }
+            
+                Integer count = urlCount.getOrDefault(temp, 0);
+                urlCount.put(temp, count + 1);
+            }
+
+            StringBuilder stringBuilder = new StringBuilder();
+            for (HashMap.Entry<String, Integer> entry : urlCount.entrySet()) {
+                stringBuilder.append(entry.getKey() + '|' + entry.getValue());
+                stringBuilder.append('|');
             }
 
             result.set(stringBuilder.substring(0, stringBuilder.length() - 1));
