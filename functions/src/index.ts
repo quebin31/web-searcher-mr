@@ -4,24 +4,63 @@ import { Firestore } from '@google-cloud/firestore';
 const projectId = 'web-searcher-293217';
 const firestore = new Firestore({ projectId });
 
+interface QueryData {
+    webId: string,
+    count: number,
+}
+
+interface SortData {
+    webId: string,
+    value: number,
+}
+
 exports.query = async (req: Request, res: Response) => {
-    let results: string[] = [];
+    // Query parameters
     const word = req.query.word;
     const limit = +(req.query.limit || '10');
 
-    if (word !== undefined) {
-        const wordDoc = await firestore.collection('inv-index').doc(req.query.word as string).get();
-        const websites = wordDoc.data()?.websites;
-
-        const pageRankDocs = websites.map((website: string) => firestore.collection('page-rank').doc(website));
-        const pageRankSnapshots = await firestore.getAll(...pageRankDocs);
-
-        const sorted = pageRankSnapshots.sort((a, b) => b.data()?.value - a.data()?.value).slice(0, limit);
-        const webDocs = sorted.map((doc) => firestore.collection('websites').doc(doc.id));
-        const webSnapshots = await firestore.getAll(...webDocs);
-
-        results = webSnapshots.map((snapshot) => snapshot.data()?.url);
+    if (word === undefined) {
+        res.status(200).json({ results: [] });
+        return;
     }
 
+    const wordWebsitesSnaps = await firestore
+        .collection('inv-index')
+        .doc(word as string)
+        .collection('websites').get();
+
+    if (wordWebsitesSnaps.empty) {
+        res.status(200).json({ results: [] });
+        return;
+    }
+
+    const allQueryData: QueryData[] = [];
+    for (const wordWebsiteDoc of wordWebsitesSnaps.docs) {
+        const webId = wordWebsiteDoc.id;
+        const count = wordWebsiteDoc.data()?.count as number;
+
+        allQueryData.push({
+            webId,
+            count,
+        });
+    }
+
+    const pageRankDocs = allQueryData.map((data: QueryData) => firestore.collection('page-rank').doc(data.webId));
+    const pageRankSnapshots = await firestore.getAll(...pageRankDocs);
+
+    const allSortData: SortData[] = allQueryData.map((data: QueryData, idx) => {
+        return {
+            webId: data.webId,
+            value: pageRankSnapshots[idx].data()?.value * data.count,
+        }
+    });
+
+    const sortedWebDocs = allSortData
+        .sort((a, b) => b.value - a.value)
+        .slice(0, limit)
+        .map((sortData) => firestore.collection('websites').doc(sortData.webId));
+
+    const sortedWebSnapshots = await firestore.getAll(...sortedWebDocs);
+    const results = sortedWebSnapshots.map((snapshot) => snapshot.data()?.url);
     res.status(200).json({ results });
 };
