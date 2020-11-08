@@ -6,18 +6,14 @@
     },
     "inv-index": {
         "<word>": {
-            "websites": [
-                {
-                    "<website-id>": {
-                        "count": "<number>"
-                    }
+            "websites": {
+                "<website-id>": {
+                    "count": "<number>"
                 },
-                {
-                    "<website-id>": {
-                        "count": "<number>"
-                    }
+                "<website-id>": {
+                    "count": "<number>"
                 }
-            ]
+            }
         }
     },
     "page-rank": {
