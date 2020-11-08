@@ -1,0 +1,28 @@
+{
+    "websites": {
+        "<website-id>": {
+            "url": "<url>"
+        }
+    },
+    "inv-index": {
+        "<word>": {
+            "websites": [
+                {
+                    "<website-id>": {
+                        "count": "<number>"
+                    }
+                },
+                {
+                    "<website-id>": {
+                        "count": "<number>"
+                    }
+                }
+            ]
+        }
+    },
+    "page-rank": {
+        "<website-id>": {
+            "value": "<number>"
+        }
+    }
+}
