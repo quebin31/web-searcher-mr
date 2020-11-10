@@ -21,6 +21,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 public class InvertedIndex {
     private final static Pattern validWordPattern = Pattern.compile("[a-zA-Z0-9]+");
     private final static Pattern tokenSeparator = Pattern.compile("( |,|\\.|-|_|;)");
+    private final static Pattern htmlExtPat = Pattern.compile("\\.html");
 
     public static String urlFromPath(String path) {
         String[] parts = path.split("/");
@@ -36,7 +37,8 @@ public class InvertedIndex {
             urlBuilder.append("/");
         }
 
-        return urlBuilder.substring(0, urlBuilder.length() - 1);
+        String url = urlBuilder.substring(0, urlBuilder.length() - 1);
+        return htmlExtPat.matcher(url).replaceAll("");
     }
 
     public static class TokenizerMapper extends Mapper<Object, Text, Text, Text> {
