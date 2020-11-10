@@ -26,7 +26,7 @@ exports.query = async (req: Request, res: Response) => {
 
     const wordWebsitesSnaps = await firestore
         .collection('inv-index')
-        .doc(word as string)
+        .doc((word as string).toLowerCase())
         .collection('websites').get();
 
     if (wordWebsitesSnaps.empty) {
