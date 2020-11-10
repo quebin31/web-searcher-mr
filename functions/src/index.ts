@@ -49,9 +49,11 @@ exports.query = async (req: Request, res: Response) => {
     const pageRankSnapshots = await firestore.getAll(...pageRankDocs);
 
     const allSortData: SortData[] = allQueryData.map((data: QueryData, idx) => {
+        const count = (data.count > 20) ? 20 : data.count;
+
         return {
             webId: data.webId,
-            value: pageRankSnapshots[idx].data()?.value * (data.count * 0.1),
+            value: pageRankSnapshots[idx].data()?.value + (count / 20),
         }
     });
 
