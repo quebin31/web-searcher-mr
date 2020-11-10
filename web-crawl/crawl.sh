@@ -5,7 +5,7 @@ OUT="${2:web-offline,logs-cache}"
 
 httrack "${URL}" \
     -O "${OUT}" \
-    -p1 -r3 -e
+    -p1 
 
 rm -rf web-offline/backblue.gif
 rm -rf web-offline/fade.gif
