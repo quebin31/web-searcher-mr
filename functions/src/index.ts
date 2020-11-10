@@ -51,7 +51,7 @@ exports.query = async (req: Request, res: Response) => {
     const allSortData: SortData[] = allQueryData.map((data: QueryData, idx) => {
         return {
             webId: data.webId,
-            value: pageRankSnapshots[idx].data()?.value * data.count,
+            value: pageRankSnapshots[idx].data()?.value * (data.count * 0.1),
         }
     });
 
