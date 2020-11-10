@@ -1,5 +1,7 @@
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -16,12 +18,31 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 public class InitPageRank {
+    private final static Pattern normalizePat = Pattern.compile("(http:\\/\\/|https:\\/\\/|\\?.*)");
+    private final static Pattern validRefPat = Pattern.compile("^(http|\\/|[a-zA-Z0-9]).*");
+    private final static Pattern htmlExtPat = Pattern.compile("\\.html");
+
+    public static boolean isValidRef(String url) {
+        Matcher matcher = validRefPat.matcher(url);
+        return matcher.matches();
+    }
+
     public static boolean isAbsoluteUrl(String url) {
         return url.startsWith("http");
     }
 
-    public static String cleanUrl(String url) {
-        return url.replaceAll("(http://|https://|\\?.*)", "");
+    public static String normalizeUrl(String domain, String url) {
+        String absoluteUrl = url;
+        if (!isAbsoluteUrl(absoluteUrl)) {
+            if (absoluteUrl.startsWith("/")) {
+                absoluteUrl = domain.concat(absoluteUrl);
+            } else {    
+                absoluteUrl = domain.concat("/").concat(absoluteUrl);
+            }
+        }
+
+        Matcher matcher = normalizePat.matcher(absoluteUrl);
+        return matcher.replaceAll("");
     }
 
     public static String urlFromPath(String path) {
@@ -38,7 +59,16 @@ public class InitPageRank {
             urlBuilder.append("/");
         }
 
-        return urlBuilder.substring(0, urlBuilder.length() - 1);
+        String url = urlBuilder.substring(0, urlBuilder.length() - 1);
+        return htmlExtPat.matcher(url).replaceAll("");
+    }
+
+    public static String getDomain(String url) {
+        int firstSlash = url.indexOf('/');
+        if (firstSlash == -1)
+            return url;
+        else 
+            return url.substring(0, firstSlash);
     }
 
     public static class OutLinkMapper extends Mapper<Object, Text, Text, Text> {
@@ -52,6 +82,7 @@ public class InitPageRank {
             FileSplit split = (FileSplit) context.getInputSplit();
             String pathString = split.getPath().toString();
             String selfUrl = urlFromPath(pathString);
+            String selfDomain = getDomain(selfUrl);
 
             // Initial value of 1 for page rank
             selfUrlAndRank.set(selfUrl.concat("|1"));
@@ -59,10 +90,10 @@ public class InitPageRank {
             HashSet<String> seenUrls = new HashSet<String>();
             for (Element link : links) {
                 String url = link.attr("href");
-                if (!isAbsoluteUrl(url))
+                if (!isValidRef(url))
                     continue;
 
-                url = cleanUrl(url);
+                url = normalizeUrl(selfDomain, url);
                 if (!seenUrls.contains(url)) {
                     seenUrls.add(url);
                     outLink.set(url);
