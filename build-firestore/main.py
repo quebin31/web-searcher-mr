@@ -47,6 +47,7 @@ class AutoBatch:
 
 class Websites:
     def __init__(self, db: Firestore):
+        self.db = db
         self.batch = AutoBatch(db)
         self.webids: Mapping[str, str] = {}
 
@@ -66,6 +67,13 @@ class Websites:
         self.webids[website] = webid
 
         return webid
+
+    def update(self):
+        webs = self.db.collection('websites').get()
+        for doc in webs:
+            self.webids[doc.id] = doc.get('url')
+
+        return self
 
 
 def get_website_id(website: str, websites: Websites, create: bool):
@@ -173,16 +181,22 @@ if __name__ == '__main__':
                         required=True, help='Project id')
     parser.add_argument('-c', '--clear',
                         action='store_true', help='Clear downloads after')
+    parser.add_argument('--inv-index', action='store_true')
+    parser.add_argument('--page-rank', action='store_true')
 
     args = parser.parse_args()
     print(f'Args: {args}')
 
     db = Firestore(project=args.project_id)
     storage = Storage(project=args.project_id)
-    websites = Websites(db)
+    websites = Websites(db).update()
 
-    push_inv_index(websites, db, storage)
-    push_page_rank(websites, db, storage)
+    if args.inv_index:
+        push_inv_index(websites, db, storage)
+
+    if args.page_rank:
+        push_page_rank(websites, db, storage)
+
     websites.finish()
 
     if args.clear:
