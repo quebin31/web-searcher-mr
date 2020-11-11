@@ -31,14 +31,21 @@ class AutoBatch:
         self.batch = db.batch()
         self.bsize = 0
 
-    def create(self, ref: DocumentReference, data: any):
-        self.batch.create(ref, data)
-        self.bsize += 1
-
+    def _maybe_commit(self):
         if self.bsize == BATCH_MAX_SIZE:
             self.batch.commit()
             self.batch = self.db.batch()
             self.bsize = 0
+
+    def create(self, ref: DocumentReference, data: any):
+        self.batch.create(ref, data)
+        self.bsize += 1
+        self._maybe_commit()
+
+    def set(self, ref: DocumentReference, data: any, merge: bool):
+        self.batch.set(ref, data, merge)
+        self.bsize += 1
+        self._maybe_commit()
 
     def finish(self):
         if self.bsize != 0:
@@ -136,7 +143,7 @@ def push_inv_index(websites: Websites, db: Firestore, storage: Storage):
                     webid = get_website_id(url, websites, create=True)
 
                     word_website_doc = word_website_sub.document(webid)
-                    batch.create(word_website_doc, {'count': count})
+                    batch.set(word_website_doc, {'count': count}, merge=True)
 
             batch.finish()
 
