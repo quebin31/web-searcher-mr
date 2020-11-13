@@ -79,6 +79,8 @@ class Websites:
         webs = self.db.collection('websites').get()
         for doc in webs:
             self.webids[doc.id] = doc.get('url')
+        else:
+            print('No websites already stored')
 
         return self
 
@@ -143,7 +145,7 @@ def push_inv_index(websites: Websites, db: Firestore, storage: Storage):
                     webid = get_website_id(url, websites, create=True)
 
                     word_website_doc = word_website_sub.document(webid)
-                    batch.set(word_website_doc, {'count': count}, merge=True)
+                    batch.create(word_website_doc, {'count': count})
 
             batch.finish()
 
